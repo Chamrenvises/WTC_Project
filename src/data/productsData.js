@@ -1,5 +1,5 @@
 import { collection, deleteDoc, doc, onSnapshot, runTransaction, setDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { auth, db, storage } from "../firebase/config";
 
 const PRODUCTS_STORAGE_KEY = "phonezone_products";
@@ -19,6 +19,29 @@ function withTimeout(promise, message) {
   });
 
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
+function uploadProductImage(imageRef, imageFile) {
+  return new Promise((resolve, reject) => {
+    const uploadTask = uploadBytesResumable(imageRef, imageFile);
+    let timeoutId = setTimeout(() => {
+      uploadTask.cancel();
+      reject(new Error("Image upload timed out. Check Firebase Storage and try again."));
+    }, FIREBASE_REQUEST_TIMEOUT);
+
+    uploadTask.on(
+      "state_changed",
+      undefined,
+      (error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      },
+      () => {
+        clearTimeout(timeoutId);
+        resolve(uploadTask.snapshot);
+      }
+    );
+  });
 }
 
 export const DEFAULT_PRODUCTS = [
@@ -232,11 +255,9 @@ export async function saveLocalProduct(productData) {
 
   if (productData.imageFile && storage) {
     try {
-      const imageRef = ref(storage, `products/${productId}/${productData.imageFile.name}`);
-      const uploaded = await withTimeout(
-        uploadBytes(imageRef, productData.imageFile),
-        "Image upload timed out. Check Firebase Storage and try again."
-      );
+      const safeFileName = productData.imageFile.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const imageRef = ref(storage, `products/${productId}/${Date.now()}-${safeFileName}`);
+      const uploaded = await uploadProductImage(imageRef, productData.imageFile);
       imageUrl = await withTimeout(
         getDownloadURL(uploaded.ref),
         "Getting the uploaded image URL timed out. Try again."
