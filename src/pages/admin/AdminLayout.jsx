@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import {
   MdDashboard,
   MdInventory,
-  MdMiscellaneousServices,
   MdMenu,
   MdClose,
   MdPerson,
@@ -31,7 +30,6 @@ export default function AdminLayout({ children }) {
   const navItems = [
     { to: "/admin/dashboard", icon: MdDashboard, label: "Dashboard" },
     { to: "/admin/products", icon: MdInventory, label: "Products" },
-    { to: "/admin/services", icon: MdMiscellaneousServices, label: "Services" },
     { to: "/admin/profile", icon: MdPerson, label: "Profile & Security" },
   ];
 

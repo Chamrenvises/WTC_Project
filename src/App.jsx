@@ -21,7 +21,6 @@ import Register from "./pages/admin/Register";
 import ForgotPassword from "./pages/admin/ForgotPassword";
 import Dashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
-import AdminServices from "./pages/admin/AdminServices";
 
 function PublicLayout({ children }) {
   return (
@@ -72,14 +71,6 @@ export default function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <AdminLayout><AdminProducts /></AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/services"
-              element={
-                <ProtectedRoute adminOnly>
-                  <AdminLayout><AdminServices /></AdminLayout>
                 </ProtectedRoute>
               }
             />
