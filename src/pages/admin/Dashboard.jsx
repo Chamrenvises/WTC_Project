@@ -196,7 +196,7 @@ export default function Dashboard() {
             </h4>
             <div className="space-y-2.5">
               {[
-                { label: "Local Database Store", status: "Active" },
+                { label: "Cloud Firestore Database", status: "Connected" },
                 { label: "Auth Provider Engine", status: "Active" },
                 { label: "Image CDN & Storage", status: "Online" },
               ].map((item) => (
