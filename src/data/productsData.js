@@ -6,10 +6,20 @@ const PRODUCTS_STORAGE_KEY = "phonezone_products";
 const PRODUCTS_COLLECTION = "products";
 const OPTIONS_STORAGE_KEY = "phonezone_catalog_options";
 const OPTIONS_DOCUMENT = "catalogOptions/options";
+const FIREBASE_REQUEST_TIMEOUT = 30000;
 const DEFAULT_CATALOG_OPTIONS = {
   brands: ["Apple", "Samsung", "Xiaomi", "OnePlus", "Google", "Oppo", "Other"],
   categories: ["Flagship", "Mid-range", "Budget"],
 };
+
+function withTimeout(promise, message) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), FIREBASE_REQUEST_TIMEOUT);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
 
 export const DEFAULT_PRODUCTS = [
   {
@@ -223,8 +233,14 @@ export async function saveLocalProduct(productData) {
   if (productData.imageFile && storage) {
     try {
       const imageRef = ref(storage, `products/${productId}/${productData.imageFile.name}`);
-      const uploaded = await uploadBytes(imageRef, productData.imageFile);
-      imageUrl = await getDownloadURL(uploaded.ref);
+      const uploaded = await withTimeout(
+        uploadBytes(imageRef, productData.imageFile),
+        "Image upload timed out. Check Firebase Storage and try again."
+      );
+      imageUrl = await withTimeout(
+        getDownloadURL(uploaded.ref),
+        "Getting the uploaded image URL timed out. Try again."
+      );
     } catch (err) {
       // surface storage errors with a clearer message
       // eslint-disable-next-line no-console
@@ -249,7 +265,10 @@ export async function saveLocalProduct(productData) {
     localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated));
     if (db) {
       try {
-        await setDoc(doc(db, PRODUCTS_COLLECTION, productData.id), savedProduct);
+        await withTimeout(
+          setDoc(doc(db, PRODUCTS_COLLECTION, productData.id), savedProduct),
+          "Saving to the database timed out. Check your connection and try again."
+        );
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error("Failed saving product to Firestore:", err);
@@ -266,7 +285,10 @@ export async function saveLocalProduct(productData) {
     localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
     if (db) {
       try {
-        await setDoc(doc(db, PRODUCTS_COLLECTION, newProduct.id), newProduct);
+        await withTimeout(
+          setDoc(doc(db, PRODUCTS_COLLECTION, newProduct.id), newProduct),
+          "Saving to the database timed out. Check your connection and try again."
+        );
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error("Failed saving new product to Firestore:", err);
