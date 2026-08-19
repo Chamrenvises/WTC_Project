@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
-import { HiEye, HiEyeOff, HiLockClosed, HiMail, HiShieldCheck, HiUser } from "react-icons/hi";
+import { HiEye, HiEyeOff, HiLockClosed, HiMail } from "react-icons/hi";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -53,16 +53,6 @@ export default function Login() {
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h1>
             <p className="text-slate-500 text-sm font-medium mt-1">Sign in to your account to continue</p>
-          </div>
-        </div>
-
-        {/* Role Pills */}
-        <div className="flex justify-center gap-4">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 text-white shadow-md text-xs font-bold uppercase tracking-widest">
-            <HiShieldCheck className="text-[#f94f25] text-base" /> Admin
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-600 shadow-sm text-xs font-bold uppercase tracking-widest">
-            <HiUser className="text-[#0056ff] text-base" /> Customer
           </div>
         </div>
 
