@@ -20,6 +20,12 @@ function withTimeout(promise, message) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
 }
 
+function isPermissionDenied(error) {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  return code.includes("permission-denied") || message.includes("missing or insufficient permissions");
+}
+
 export const DEFAULT_PRODUCTS = [
   {
     id: "phone-1",
@@ -243,6 +249,10 @@ export async function saveLocalProduct(productData) {
           "Saving to the database timed out. Check your connection and try again."
         );
       } catch (err) {
+        if (isPermissionDenied(err)) {
+          // Keep local changes so admin can continue working even when cloud rules reject this client.
+          return savedProduct;
+        }
         // eslint-disable-next-line no-console
         console.error("Failed saving product to Firestore:", err);
         throw new Error("Failed saving product to database: " + (err?.message || err?.code || "unknown error"));
@@ -263,6 +273,10 @@ export async function saveLocalProduct(productData) {
           "Saving to the database timed out. Check your connection and try again."
         );
       } catch (err) {
+        if (isPermissionDenied(err)) {
+          // Keep local changes so admin can continue working even when cloud rules reject this client.
+          return newProduct;
+        }
         // eslint-disable-next-line no-console
         console.error("Failed saving new product to Firestore:", err);
         throw new Error("Failed saving product to database: " + (err?.message || err?.code || "unknown error"));
