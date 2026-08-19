@@ -91,6 +91,9 @@ export default function CartDrawer() {
 
                     <p className="text-xs text-indigo-400 font-semibold">{item.brand}</p>
                     <p className="text-sm font-black text-white">${Number(item.price).toLocaleString()}</p>
+                    <p className={`text-xs font-semibold ${Number(item.stock) > 0 ? "text-emerald-400" : "text-red-400"}`}>
+                      {Number(item.stock) > 0 ? `${item.stock} in stock` : "Out of stock"}
+                    </p>
 
                     {/* Quantity controls */}
                     <div className="flex items-center gap-2 pt-2">
@@ -104,7 +107,8 @@ export default function CartDrawer() {
                         <span className="px-2.5 text-xs font-bold text-white">{item.quantity || 1}</span>
                         <button
                           onClick={() => updateQuantity(item.id, (item.quantity || 1) + 1)}
-                          className="p-1.5 text-slate-300 hover:text-white transition-colors"
+                          disabled={(item.quantity || 1) >= Number(item.stock || 0)}
+                          className="p-1.5 text-slate-300 hover:text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <HiPlus className="text-xs" />
                         </button>

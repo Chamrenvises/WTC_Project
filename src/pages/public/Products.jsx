@@ -215,14 +215,20 @@ export default function Products() {
 
                   {/* Pricing and Action */}
                   <div className="flex items-center justify-between gap-4 mt-auto">
-                    <span className="text-3xl font-black text-slate-900">
-                      ${Number(phone.price).toLocaleString()}
-                    </span>
+                    <div>
+                      <span className="text-3xl font-black text-slate-900 block">
+                        ${Number(phone.price).toLocaleString()}
+                      </span>
+                      <span className={`text-xs font-bold ${Number(phone.stock) > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                        {Number(phone.stock) > 0 ? `${phone.stock} in stock` : "Out of stock"}
+                      </span>
+                    </div>
                     <button
                       onClick={() => addToCart(phone)}
-                      className="btn-buy"
+                      disabled={Number(phone.stock) <= 0}
+                      className="btn-buy disabled:cursor-not-allowed disabled:opacity-40 disabled:transform-none"
                     >
-                      Buy
+                      {Number(phone.stock) > 0 ? "Buy" : "Sold out"}
                     </button>
                   </div>
                 </div>
