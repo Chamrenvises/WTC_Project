@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { HiArrowRight, HiStar, HiShoppingBag, HiCheckCircle } from "react-icons/hi";
 import { MdLocalShipping, MdSupportAgent, MdSwapHoriz } from "react-icons/md";
-import { getLocalProducts } from "../../data/productsData";
+import { getLocalProducts, subscribeToProducts } from "../../data/productsData";
 import { useCart } from "../../context/CartContext";
 
 export default function Home() {
@@ -10,8 +10,11 @@ export default function Home() {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    const all = getLocalProducts();
-    setFeaturedPhones(all.slice(0, 4));
+    const unsubscribe = subscribeToProducts((list) => {
+      const all = list.length ? list : getLocalProducts();
+      setFeaturedPhones(all.slice(0, 4));
+    });
+    return unsubscribe;
   }, []);
 
   const features = [
@@ -119,7 +122,7 @@ export default function Home() {
 
                   <div className="flex items-center justify-between gap-4 mt-auto">
                     <span className="text-2xl font-black text-slate-900">
-                      ${phone.price.toLocaleString()}
+                      ${Number(phone.price).toLocaleString()}
                     </span>
                     <button
                       onClick={() => addToCart(phone)}
