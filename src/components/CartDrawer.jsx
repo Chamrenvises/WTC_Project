@@ -1,11 +1,20 @@
+import { useEffect } from "react";
 import { useCart } from "../context/CartContext";
-import { Link } from "react-router-dom";
 import { HiX, HiTrash, HiPlus, HiMinus, HiArrowRight, HiShoppingBag, HiShieldCheck } from "react-icons/hi";
 import { toast } from "react-toastify";
 import { purchaseProducts } from "../data/productsData";
 
 export default function CartDrawer() {
   const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, clearCart, subtotal, totalCount } = useCart();
+
+  useEffect(() => {
+    if (!isCartOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isCartOpen]);
 
   if (!isCartOpen) return null;
 
@@ -21,15 +30,14 @@ export default function CartDrawer() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-[60] overflow-hidden pointer-events-none">
       <div
-        className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity pointer-events-auto"
         onClick={() => setIsCartOpen(false)}
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-[#0f111e] border-l border-white/10 shadow-2xl flex flex-col justify-between">
+      <div className="absolute inset-y-0 right-0 w-full max-w-md pointer-events-auto">
+        <div className="h-full w-full bg-[#0f111e] border-l border-white/10 shadow-2xl flex flex-col justify-between">
           {/* Header */}
           <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#131526]">
             <div className="flex items-center gap-3">
