@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { HiPlus, HiPencil, HiTrash, HiSearch, HiX, HiUpload, HiPhotograph } from "react-icons/hi";
+import { HiPlus, HiPencil, HiTrash, HiSearch, HiX } from "react-icons/hi";
 import { MdSmartphone } from "react-icons/md";
 import {
   DEFAULT_PRODUCTS,
@@ -19,10 +19,6 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
   const [form, setForm] = useState(
     initial || { name: "", brand: "Apple", price: "", stock: "20", category: "Flagship", specs: "", description: "", imageUrl: "" }
   );
-  const [preview, setPreview] = useState(initial?.imageUrl || "");
-  const [previewError, setPreviewError] = useState(false);
-  const [imageFile, setImageFile] = useState(null);
-  const fileRef = useRef();
 
   useEffect(() => {
     setForm(
@@ -37,47 +33,30 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
         imageUrl: "",
       }
     );
-    setPreview(initial?.imageUrl || "");
-    setPreviewError(false);
-    setImageFile(null);
   }, [initial, open]);
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    if (name === "imageUrl") {
-      setPreview(value);
-      setPreviewError(false);
-    }
   }
 
-  function handleImageFileChange(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPreview(reader.result);
-      setPreviewError(false);
-      setImageFile(file);
-      setForm((prev) => ({ ...prev, imageUrl: reader.result }));
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!form.name || !form.price || !form.brand) {
       toast.error("Phone Name, Brand, and Price are required.");
       return;
     }
-    onSave({
+
+    const finalImageUrl =
+      form.imageUrl ||
+      initial?.imageUrl ||
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80";
+
+    await onSave({
       ...form,
       price: Number(form.price),
       stock: Number(form.stock || 0),
-      imageFile,
-      imageUrl:
-        preview ||
-        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80",
+      imageUrl: finalImageUrl,
     });
     onClose();
   }
@@ -100,57 +79,18 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Image Preview & URL input */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Product Photo (URL or File)
+              Product Photo URL
             </label>
-            <div className="flex gap-4 items-center">
-              <div
-                className="w-24 h-24 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center cursor-pointer hover:border-[#f94f25] transition-colors shrink-0 shadow-sm"
-                onClick={() => fileRef.current?.click()}
-                title="Click to select image file"
-              >
-                {preview && !previewError ? (
-                  <img
-                    src={preview}
-                    alt="Product preview"
-                    className="w-full h-full object-cover"
-                    onError={() => setPreviewError(true)}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center gap-1 text-center px-2">
-                    <HiPhotograph className="text-3xl text-slate-300" />
-                    {previewError && <span className="text-[10px] font-semibold text-slate-400">Preview unavailable</span>}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 space-y-2">
-                <input
-                  type="url"
-                  name="imageUrl"
-                  value={form.imageUrl}
-                  onChange={handleChange}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="input-field text-xs py-2.5 border-slate-200"
-                />
-                <p className="text-[11px] text-slate-400">Use a direct image link, or choose a file from your device.</p>
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                >
-                  <HiUpload /> Choose Image
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageFileChange}
-                  className="hidden"
-                />
-              </div>
-            </div>
+            <input
+              type="url"
+              name="imageUrl"
+              value={form.imageUrl}
+              onChange={handleChange}
+              placeholder="https://images.unsplash.com/photo-..."
+              className="input-field text-xs py-2.5 border-slate-200"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
