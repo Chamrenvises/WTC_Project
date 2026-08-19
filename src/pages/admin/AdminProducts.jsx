@@ -289,8 +289,11 @@ export default function AdminProducts() {
       await saveLocalProduct(editing ? { ...editing, ...data } : data);
       toast.success(editing ? "Phone updated successfully!" : "New phone added to inventory!");
       setEditing(null);
-    } catch {
-      toast.error("Could not save the phone. Check your connection and try again.");
+    } catch (error) {
+      // surface the underlying error when possible for easier debugging
+      // eslint-disable-next-line no-console
+      console.error("Failed saving product:", error);
+      toast.error(error?.message || "Could not save the phone. Check your connection and try again.");
     }
   }
 
@@ -299,8 +302,10 @@ export default function AdminProducts() {
       try {
         await deleteLocalProduct(id);
         toast.success(`"${name}" removed from inventory.`);
-      } catch {
-        toast.error("Could not delete the phone. Check your connection and try again.");
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed deleting product:", error);
+        toast.error(error?.message || "Could not delete the phone. Check your connection and try again.");
       }
     }
   }

@@ -1,6 +1,6 @@
 import { collection, deleteDoc, doc, onSnapshot, runTransaction, setDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "../firebase/config";
+import { auth, db, storage } from "../firebase/config";
 
 const PRODUCTS_STORAGE_KEY = "phonezone_products";
 const PRODUCTS_COLLECTION = "products";
@@ -137,10 +137,25 @@ export async function saveLocalProduct(productData) {
   const productId = productData.id || `phone-${Date.now()}`;
   let imageUrl = productData.imageUrl;
 
+  if (db && auth?.currentUser?.email?.toLowerCase() !== "chamrenvises6@gmail.com") {
+    throw new Error("Admin access is required to save products. Sign in with the admin account.");
+  }
+
+  if (productData.imageFile && !storage) {
+    throw new Error("Image storage is not configured. Use an image URL or configure Firebase Storage.");
+  }
+
   if (productData.imageFile && storage) {
-    const imageRef = ref(storage, `products/${productId}/${productData.imageFile.name}`);
-    const uploaded = await uploadBytes(imageRef, productData.imageFile);
-    imageUrl = await getDownloadURL(uploaded.ref);
+    try {
+      const imageRef = ref(storage, `products/${productId}/${productData.imageFile.name}`);
+      const uploaded = await uploadBytes(imageRef, productData.imageFile);
+      imageUrl = await getDownloadURL(uploaded.ref);
+    } catch (err) {
+      // surface storage errors with a clearer message
+      // eslint-disable-next-line no-console
+      console.error("Image upload failed:", err);
+      throw new Error("Image upload failed: " + (err?.message || err?.code || "unknown error"));
+    }
   }
 
   const cleanProductData = { ...productData, id: productId, imageUrl };
@@ -152,7 +167,15 @@ export async function saveLocalProduct(productData) {
     );
     localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated));
     const savedProduct = updated.find((product) => product.id === productData.id);
-    if (db) await setDoc(doc(db, PRODUCTS_COLLECTION, productData.id), savedProduct);
+    if (db) {
+      try {
+        await setDoc(doc(db, PRODUCTS_COLLECTION, productData.id), savedProduct);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("Failed saving product to Firestore:", err);
+        throw new Error("Failed saving product to database: " + (err?.message || err?.code || "unknown error"));
+      }
+    }
     return savedProduct;
   } else {
     const newProduct = {
@@ -161,7 +184,15 @@ export async function saveLocalProduct(productData) {
     };
     products.unshift(newProduct);
     localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
-    if (db) await setDoc(doc(db, PRODUCTS_COLLECTION, newProduct.id), newProduct);
+    if (db) {
+      try {
+        await setDoc(doc(db, PRODUCTS_COLLECTION, newProduct.id), newProduct);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("Failed saving new product to Firestore:", err);
+        throw new Error("Failed saving product to database: " + (err?.message || err?.code || "unknown error"));
+      }
+    }
     return newProduct;
   }
 }
@@ -195,6 +226,9 @@ export async function purchaseProducts(cart) {
 
 export async function deleteLocalProduct(productId) {
   const products = getLocalProducts();
+  if (db && auth?.currentUser?.email?.toLowerCase() !== "chamrenvises6@gmail.com") {
+    throw new Error("Admin access is required to delete products. Sign in with the admin account.");
+  }
   const filtered = products.filter((p) => p.id !== productId);
   localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(filtered));
   if (db) await deleteDoc(doc(db, PRODUCTS_COLLECTION, productId));
