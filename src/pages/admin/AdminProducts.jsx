@@ -21,6 +21,7 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
   );
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(initial?.imageUrl || "");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setForm(
@@ -37,6 +38,7 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
     );
     setImageFile(null);
     setImagePreview(initial?.imageUrl || "");
+    setSaving(false);
   }, [initial, open]);
 
   function handleChange(e) {
@@ -66,6 +68,7 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (saving) return;
     if (!form.name || !form.price || !form.brand) {
       toast.error("Phone Name, Brand, and Price are required.");
       return;
@@ -77,6 +80,7 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
       "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80";
 
     try {
+      setSaving(true);
       await onSave({
         ...form,
         price: Number(form.price),
@@ -87,6 +91,7 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
       onClose();
     } catch {
       // Keep the form open so the admin can retry after a failed upload or save.
+      setSaving(false);
     }
   }
 
@@ -245,8 +250,8 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
             <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center text-sm py-2.5 bg-white border-slate-200 hover:bg-slate-50 text-slate-700">
               Cancel
             </button>
-            <button type="submit" className="btn-primary flex-1 justify-center text-sm py-2.5 bg-slate-900 hover:bg-slate-800 border-none shadow-md">
-              {initial ? "Save Changes" : "Create Smartphone"}
+            <button type="submit" disabled={saving} className="btn-primary flex-1 justify-center text-sm py-2.5 bg-slate-900 hover:bg-slate-800 border-none shadow-md disabled:cursor-wait disabled:opacity-60 disabled:transform-none">
+              {saving ? "Saving..." : initial ? "Save Changes" : "Create Smartphone"}
             </button>
           </div>
         </form>
