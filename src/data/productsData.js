@@ -131,6 +131,15 @@ export async function seedProducts(products) {
   );
 }
 
+export async function seedMissingProducts(defaultProducts, existingProducts) {
+  if (!db) return;
+  const existingIds = new Set(existingProducts.map((product) => product.id));
+  const missingProducts = defaultProducts.filter((product) => !existingIds.has(product.id));
+  await Promise.all(
+    missingProducts.map((product) => setDoc(doc(db, PRODUCTS_COLLECTION, product.id), product))
+  );
+}
+
 export async function saveLocalProduct(productData) {
   const products = getLocalProducts();
   if (productData.id) {

@@ -8,6 +8,7 @@ import {
   saveLocalProduct,
   deleteLocalProduct,
   seedProducts,
+  seedMissingProducts,
   subscribeToProducts,
 } from "../../data/productsData";
 
@@ -276,6 +277,7 @@ export default function AdminProducts() {
         return;
       }
       setProducts(list);
+      seedMissingProducts(DEFAULT_PRODUCTS, list).catch(() => {});
     });
     return unsubscribe;
   }, []);
