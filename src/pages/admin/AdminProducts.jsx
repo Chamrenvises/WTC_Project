@@ -9,12 +9,13 @@ import {
   deleteLocalProduct,
   seedProducts,
   subscribeToProducts,
+  getCatalogOptions,
+  subscribeToCatalogOptions,
+  saveCatalogOption,
+  deleteCatalogOption,
 } from "../../data/productsData";
 
-const BRANDS = ["Apple", "Samsung", "Xiaomi", "OnePlus", "Google", "Oppo", "Other"];
-const CATEGORIES = ["Flagship", "Mid-range", "Budget"];
-
-function ProductModal({ open, onClose, onSave, initial }) {
+function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
   const [form, setForm] = useState(
     initial || { name: "", brand: "Apple", price: "", stock: "20", category: "Flagship", specs: "", description: "", imageUrl: "" }
   );
@@ -176,7 +177,7 @@ function ProductModal({ open, onClose, onSave, initial }) {
                 className="input-field text-sm border-slate-200"
                 required
               >
-                {BRANDS.map((b) => (
+                {brands.map((b) => (
                   <option key={b} value={b}>
                     {b}
                   </option>
@@ -192,7 +193,7 @@ function ProductModal({ open, onClose, onSave, initial }) {
                 onChange={handleChange}
                 className="input-field text-sm border-slate-200"
               >
-                {CATEGORIES.map((c) => (
+                {categories.map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
@@ -267,6 +268,9 @@ function ProductModal({ open, onClose, onSave, initial }) {
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
+  const [catalogOptions, setCatalogOptions] = useState(getCatalogOptions);
+  const [optionType, setOptionType] = useState("brands");
+  const [optionName, setOptionName] = useState("");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -283,6 +287,31 @@ export default function AdminProducts() {
     });
     return unsubscribe;
   }, []);
+
+  useEffect(() => subscribeToCatalogOptions(setCatalogOptions), []);
+
+  async function handleAddOption(e) {
+    e.preventDefault();
+    if (!optionName.trim()) return;
+    try {
+      const updated = await saveCatalogOption(optionType, optionName);
+      setCatalogOptions(updated);
+      setOptionName("");
+      toast.success(`${optionType === "brands" ? "Brand" : "Category / Tier"} added.`);
+    } catch (error) {
+      toast.error(error?.message || "Could not save this option.");
+    }
+  }
+
+  async function handleDeleteOption(type, option) {
+    if (!window.confirm(`Remove ${option} from the available options? Existing products will not change.`)) return;
+    try {
+      const updated = await deleteCatalogOption(type, option);
+      setCatalogOptions(updated);
+    } catch (error) {
+      toast.error(error?.message || "Could not remove this option.");
+    }
+  }
 
   async function handleSave(data) {
     try {
@@ -339,6 +368,38 @@ export default function AdminProducts() {
         <button onClick={openAdd} className="btn-primary text-sm px-6 py-3 flex items-center gap-2 shadow-md shadow-[#f94f25]/20">
           <HiPlus className="text-lg" /> Add Smartphone
         </button>
+      </div>
+
+      <div className="card p-5 sm:p-6 border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">Catalog options</h2>
+            <p className="text-sm text-slate-500 mt-1">Add brands and category tiers for product creation.</p>
+          </div>
+          <form onSubmit={handleAddOption} className="flex flex-col sm:flex-row gap-2 w-full lg:max-w-xl">
+            <select value={optionType} onChange={(e) => setOptionType(e.target.value)} className="input-field text-sm sm:max-w-[170px]">
+              <option value="brands">Brand</option>
+              <option value="categories">Category / Tier</option>
+            </select>
+            <input value={optionName} onChange={(e) => setOptionName(e.target.value)} placeholder="e.g. Nothing or Premium" className="input-field text-sm flex-1" />
+            <button type="submit" className="btn-primary text-sm px-4 py-2.5"><HiPlus /> Add</button>
+          </form>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 pt-5 border-t border-slate-100">
+          {["brands", "categories"].map((type) => (
+            <div key={type}>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{type === "brands" ? "Brands" : "Category / Tier"}</p>
+              <div className="flex flex-wrap gap-2">
+                {catalogOptions[type].map((option) => (
+                  <span key={option} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                    {option}
+                    <button type="button" onClick={() => handleDeleteOption(type, option)} className="text-slate-400 hover:text-red-500" title={`Remove ${option}`}><HiX /></button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Main Table Card */}
@@ -448,6 +509,8 @@ export default function AdminProducts() {
         }}
         onSave={handleSave}
         initial={editing}
+        brands={catalogOptions.brands}
+        categories={catalogOptions.categories}
       />
     </div>
   );

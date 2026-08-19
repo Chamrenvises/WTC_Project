@@ -4,6 +4,12 @@ import { auth, db, storage } from "../firebase/config";
 
 const PRODUCTS_STORAGE_KEY = "phonezone_products";
 const PRODUCTS_COLLECTION = "products";
+const OPTIONS_STORAGE_KEY = "phonezone_catalog_options";
+const OPTIONS_DOCUMENT = "catalogOptions/options";
+const DEFAULT_CATALOG_OPTIONS = {
+  brands: ["Apple", "Samsung", "Xiaomi", "OnePlus", "Google", "Oppo", "Other"],
+  categories: ["Flagship", "Mid-range", "Budget"],
+};
 
 export const DEFAULT_PRODUCTS = [
   {
@@ -123,6 +129,75 @@ export function subscribeToProducts(onChange, onError) {
       onChange(getLocalProducts());
     }
   );
+}
+
+function normalizeCatalogOptions(value) {
+  return {
+    brands: Array.from(new Set(value?.brands?.filter(Boolean) || DEFAULT_CATALOG_OPTIONS.brands)),
+    categories: Array.from(new Set(value?.categories?.filter(Boolean) || DEFAULT_CATALOG_OPTIONS.categories)),
+  };
+}
+
+export function getCatalogOptions() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(OPTIONS_STORAGE_KEY) || "null");
+    const options = normalizeCatalogOptions(parsed || DEFAULT_CATALOG_OPTIONS);
+    localStorage.setItem(OPTIONS_STORAGE_KEY, JSON.stringify(options));
+    return options;
+  } catch {
+    return DEFAULT_CATALOG_OPTIONS;
+  }
+}
+
+export function subscribeToCatalogOptions(onChange, onError) {
+  if (!db) {
+    onChange(getCatalogOptions());
+    return () => {};
+  }
+
+  return onSnapshot(
+    doc(db, OPTIONS_DOCUMENT),
+    (snapshot) => {
+      const options = normalizeCatalogOptions(snapshot.exists() ? snapshot.data() : DEFAULT_CATALOG_OPTIONS);
+      localStorage.setItem(OPTIONS_STORAGE_KEY, JSON.stringify(options));
+      onChange(options);
+    },
+    (error) => {
+      onError?.(error);
+      onChange(getCatalogOptions());
+    }
+  );
+}
+
+export async function saveCatalogOption(type, label) {
+  const cleanLabel = label.trim();
+  if (!cleanLabel || !["brands", "categories"].includes(type)) return getCatalogOptions();
+  if (db && auth?.currentUser?.email?.toLowerCase() !== "chamrenvises6@gmail.com") {
+    throw new Error("Admin access is required to manage brands and categories.");
+  }
+
+  const options = getCatalogOptions();
+  if (options[type].some((option) => option.toLowerCase() === cleanLabel.toLowerCase())) return options;
+  const updated = { ...options, [type]: [...options[type], cleanLabel] };
+  localStorage.setItem(OPTIONS_STORAGE_KEY, JSON.stringify(updated));
+  if (db) await setDoc(doc(db, OPTIONS_DOCUMENT), updated, { merge: true });
+  return updated;
+}
+
+export async function deleteCatalogOption(type, label) {
+  if (![
+    "brands",
+    "categories",
+  ].includes(type)) return getCatalogOptions();
+  if (db && auth?.currentUser?.email?.toLowerCase() !== "chamrenvises6@gmail.com") {
+    throw new Error("Admin access is required to manage brands and categories.");
+  }
+
+  const options = getCatalogOptions();
+  const updated = { ...options, [type]: options[type].filter((option) => option !== label) };
+  localStorage.setItem(OPTIONS_STORAGE_KEY, JSON.stringify(updated));
+  if (db) await setDoc(doc(db, OPTIONS_DOCUMENT), updated, { merge: true });
+  return updated;
 }
 
 export async function seedProducts(products) {
