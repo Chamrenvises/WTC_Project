@@ -2,7 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { HiPlus, HiPencil, HiTrash, HiSearch, HiX, HiUpload, HiPhotograph } from "react-icons/hi";
 import { MdSmartphone } from "react-icons/md";
-import { getLocalProducts, saveLocalProduct, deleteLocalProduct } from "../../data/productsData";
+import {
+  DEFAULT_PRODUCTS,
+  getLocalProducts,
+  saveLocalProduct,
+  deleteLocalProduct,
+  seedProducts,
+  subscribeToProducts,
+} from "../../data/productsData";
 
 const BRANDS = ["Apple", "Samsung", "Xiaomi", "OnePlus", "Google", "Oppo", "Other"];
 const CATEGORIES = ["Flagship", "Mid-range", "Budget"];
@@ -260,31 +267,37 @@ export default function AdminProducts() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  function loadProducts() {
-    setProducts(getLocalProducts());
-  }
-
   useEffect(() => {
-    loadProducts();
+    const unsubscribe = subscribeToProducts((list) => {
+      if (list.length === 0) {
+        const localProducts = getLocalProducts();
+        setProducts(localProducts);
+        seedProducts(localProducts.length ? localProducts : DEFAULT_PRODUCTS).catch(() => {});
+        return;
+      }
+      setProducts(list);
+    });
+    return unsubscribe;
   }, []);
 
-  function handleSave(data) {
-    if (editing) {
-      saveLocalProduct({ ...editing, ...data });
-      toast.success("Phone updated successfully!");
-    } else {
-      saveLocalProduct(data);
-      toast.success("New phone added to inventory!");
+  async function handleSave(data) {
+    try {
+      await saveLocalProduct(editing ? { ...editing, ...data } : data);
+      toast.success(editing ? "Phone updated successfully!" : "New phone added to inventory!");
+      setEditing(null);
+    } catch {
+      toast.error("Could not save the phone. Check your connection and try again.");
     }
-    setEditing(null);
-    loadProducts();
   }
 
-  function handleDelete(id, name) {
+  async function handleDelete(id, name) {
     if (window.confirm(`Are you sure you want to delete "${name}" from inventory?`)) {
-      deleteLocalProduct(id);
-      toast.success(`"${name}" removed from inventory.`);
-      loadProducts();
+      try {
+        await deleteLocalProduct(id);
+        toast.success(`"${name}" removed from inventory.`);
+      } catch {
+        toast.error("Could not delete the phone. Check your connection and try again.");
+      }
     }
   }
 

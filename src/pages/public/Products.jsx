@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { HiSearch, HiShoppingBag } from "react-icons/hi";
 import { MdSmartphone } from "react-icons/md";
-import { getLocalProducts } from "../../data/productsData";
+import { getLocalProducts, subscribeToProducts } from "../../data/productsData";
 import { useCart } from "../../context/CartContext";
 
 export default function Products() {
@@ -17,9 +17,11 @@ export default function Products() {
   const categories = ["All", "Flagship", "Mid-range", "Budget"];
 
   useEffect(() => {
-    const list = getLocalProducts();
-    setPhones(list);
-    setLoading(false);
+    const unsubscribe = subscribeToProducts((list) => {
+      setPhones(list.length ? list : getLocalProducts());
+      setLoading(false);
+    });
+    return unsubscribe;
   }, []);
 
   const filtered = phones

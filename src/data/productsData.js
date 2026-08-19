@@ -1,4 +1,8 @@
+import { collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
+import { db } from "../firebase/config";
+
 const PRODUCTS_STORAGE_KEY = "phonezone_products";
+const PRODUCTS_COLLECTION = "products";
 
 export const DEFAULT_PRODUCTS = [
   {
@@ -99,17 +103,45 @@ export function getLocalProducts() {
   }
 }
 
-export function saveLocalProduct(productData) {
+export function subscribeToProducts(onChange, onError) {
+  if (!db) {
+    onChange(getLocalProducts());
+    return () => {};
+  }
+
+  return onSnapshot(
+    collection(db, PRODUCTS_COLLECTION),
+    (snapshot) => {
+      const products = snapshot.docs
+        .map((productDoc) => ({ id: productDoc.id, ...productDoc.data() }))
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      onChange(products);
+    },
+    (error) => {
+      onError?.(error);
+      onChange(getLocalProducts());
+    }
+  );
+}
+
+export async function seedProducts(products) {
+  if (!db) return;
+  await Promise.all(
+    products.map((product) => setDoc(doc(db, PRODUCTS_COLLECTION, product.id), product))
+  );
+}
+
+export async function saveLocalProduct(productData) {
   const products = getLocalProducts();
   if (productData.id) {
-    // Update existing
     const updated = products.map((p) =>
       p.id === productData.id ? { ...p, ...productData, updatedAt: new Date().toISOString() } : p
     );
     localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated));
-    return productData;
+    const savedProduct = updated.find((product) => product.id === productData.id);
+    if (db) await setDoc(doc(db, PRODUCTS_COLLECTION, productData.id), savedProduct);
+    return savedProduct;
   } else {
-    // Add new
     const newProduct = {
       ...productData,
       id: `phone-${Date.now()}`,
@@ -117,13 +149,15 @@ export function saveLocalProduct(productData) {
     };
     products.unshift(newProduct);
     localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+    if (db) await setDoc(doc(db, PRODUCTS_COLLECTION, newProduct.id), newProduct);
     return newProduct;
   }
 }
 
-export function deleteLocalProduct(productId) {
+export async function deleteLocalProduct(productId) {
   const products = getLocalProducts();
   const filtered = products.filter((p) => p.id !== productId);
   localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(filtered));
+  if (db) await deleteDoc(doc(db, PRODUCTS_COLLECTION, productId));
   return true;
 }

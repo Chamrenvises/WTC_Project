@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MdInventory, MdMiscellaneousServices, MdTrendingUp, MdSmartphone, MdPerson } from "react-icons/md";
 import { HiUsers, HiArrowRight, HiShieldCheck } from "react-icons/hi";
-import { getLocalProducts } from "../../data/productsData";
+import { getLocalProducts, subscribeToProducts } from "../../data/productsData";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Dashboard() {
@@ -15,12 +15,12 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    const list = getLocalProducts();
-    setProducts(list);
-    setStats((prev) => ({
-      ...prev,
-      products: list.length,
-    }));
+    const unsubscribe = subscribeToProducts((list) => {
+      const products = list.length ? list : getLocalProducts();
+      setProducts(products);
+      setStats((prev) => ({ ...prev, products: products.length }));
+    });
+    return unsubscribe;
   }, []);
 
   const statCards = [
