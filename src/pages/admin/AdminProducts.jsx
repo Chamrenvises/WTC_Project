@@ -430,63 +430,65 @@ export default function AdminProducts() {
               </button>
             </div>
           ) : (
-            <table className="min-w-[760px]">
+            <table className="admin-products-table">
               <thead>
                 <tr>
-                  <th className="w-1/3">Smartphone Model</th>
-                  <th>Brand</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Stock Status</th>
-                  <th className="text-right">Actions</th>
+                  <th className="col-model">Smartphone Model</th>
+                  <th className="col-brand">Brand</th>
+                  <th className="col-category">Category</th>
+                  <th className="col-price">Price</th>
+                  <th className="col-stock">Stock Status</th>
+                  <th className="col-actions">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                    <td>
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-14 h-14 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 shadow-sm">
+                  <tr key={p.id} className="admin-product-row">
+                    <td className="col-model">
+                      <div className="admin-product-model">
+                        <div className="admin-product-image">
                           {p.imageUrl ? (
-                            <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover mix-blend-multiply" />
+                            <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
                           ) : (
-                            <MdSmartphone className="text-slate-400 text-3xl mx-auto my-3" />
+                            <MdSmartphone className="text-slate-400 text-xl" />
                           )}
                         </div>
-                        <div>
-                          <p className="text-slate-900 font-bold text-sm">{p.name}</p>
-                          {p.specs && <p className="text-slate-500 text-xs font-medium truncate max-w-[220px]">{p.specs}</p>}
+                        <div className="min-w-0">
+                          <p className="admin-product-name">{p.name}</p>
+                          {p.specs && <p className="admin-product-specs">{p.specs}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="text-slate-700 font-bold text-sm">{p.brand}</td>
-                    <td>
-                      <span className="badge badge-info bg-blue-50 text-blue-600 border border-blue-100 text-[10px] uppercase font-bold tracking-wider">{p.category || "General"}</span>
+                    <td className="col-brand">
+                      <span className="admin-text-strong">{p.brand}</span>
                     </td>
-                    <td className="text-slate-900 font-black text-sm">
-                      ${Number(p.price).toLocaleString()}
+                    <td className="col-category">
+                      <span className="admin-category-badge">{p.category || "General"}</span>
                     </td>
-                    <td>
+                    <td className="col-price">
+                      <span className="admin-price">${Number(p.price).toLocaleString()}</span>
+                    </td>
+                    <td className="col-stock">
                       <span
-                        className={`badge text-[10px] uppercase font-bold tracking-wider ${
-                          Number(p.stock) > 0 ? "badge-success bg-emerald-50 text-emerald-600 border border-emerald-100" : "badge-danger bg-red-50 text-red-600 border border-red-100"
+                        className={`admin-stock-badge ${
+                          Number(p.stock) > 0 ? "success" : "danger"
                         }`}
                       >
                         {Number(p.stock) > 0 ? `${p.stock} in stock` : "Out of stock"}
                       </span>
                     </td>
-                    <td className="text-right">
-                      <div className="inline-flex items-center gap-2">
+                    <td className="col-actions">
+                      <div className="admin-actions">
                         <button
                           onClick={() => openEdit(p)}
-                          className="p-2.5 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 hover:text-[#0056ff] hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm"
+                          className="admin-action-btn edit"
                           title="Edit Phone"
                         >
                           <HiPencil className="text-base" />
                         </button>
                         <button
                           onClick={() => handleDelete(p.id, p.name)}
-                          className="p-2.5 rounded-lg bg-red-50 text-red-500 border border-red-100 hover:text-white hover:bg-red-500 hover:border-red-500 transition-all shadow-sm"
+                          className="admin-action-btn delete"
                           title="Delete Phone"
                         >
                           <HiTrash className="text-base" />
