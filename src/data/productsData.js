@@ -1,5 +1,6 @@
-import { collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
-import { db } from "../firebase/config";
+import { collection, deleteDoc, doc, onSnapshot, runTransaction, setDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { db, storage } from "../firebase/config";
 
 const PRODUCTS_STORAGE_KEY = "phonezone_products";
 const PRODUCTS_COLLECTION = "products";
@@ -131,20 +132,23 @@ export async function seedProducts(products) {
   );
 }
 
-export async function seedMissingProducts(defaultProducts, existingProducts) {
-  if (!db) return;
-  const existingIds = new Set(existingProducts.map((product) => product.id));
-  const missingProducts = defaultProducts.filter((product) => !existingIds.has(product.id));
-  await Promise.all(
-    missingProducts.map((product) => setDoc(doc(db, PRODUCTS_COLLECTION, product.id), product))
-  );
-}
-
 export async function saveLocalProduct(productData) {
   const products = getLocalProducts();
+  const productId = productData.id || `phone-${Date.now()}`;
+  let imageUrl = productData.imageUrl;
+
+  if (productData.imageFile && storage) {
+    const imageRef = ref(storage, `products/${productId}/${productData.imageFile.name}`);
+    const uploaded = await uploadBytes(imageRef, productData.imageFile);
+    imageUrl = await getDownloadURL(uploaded.ref);
+  }
+
+  const cleanProductData = { ...productData, id: productId, imageUrl };
+  delete cleanProductData.imageFile;
+
   if (productData.id) {
     const updated = products.map((p) =>
-      p.id === productData.id ? { ...p, ...productData, updatedAt: new Date().toISOString() } : p
+      p.id === productData.id ? { ...p, ...cleanProductData, updatedAt: new Date().toISOString() } : p
     );
     localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated));
     const savedProduct = updated.find((product) => product.id === productData.id);
@@ -152,8 +156,7 @@ export async function saveLocalProduct(productData) {
     return savedProduct;
   } else {
     const newProduct = {
-      ...productData,
-      id: `phone-${Date.now()}`,
+      ...cleanProductData,
       createdAt: new Date().toISOString(),
     };
     products.unshift(newProduct);
@@ -161,6 +164,33 @@ export async function saveLocalProduct(productData) {
     if (db) await setDoc(doc(db, PRODUCTS_COLLECTION, newProduct.id), newProduct);
     return newProduct;
   }
+}
+
+export async function purchaseProducts(cart) {
+  if (!db) {
+    const products = getLocalProducts();
+    const purchased = new Map(cart.map((item) => [item.id, item.quantity || 1]));
+    const updated = products.map((product) =>
+      purchased.has(product.id)
+        ? { ...product, stock: Math.max(0, Number(product.stock || 0) - purchased.get(product.id)) }
+        : product
+    );
+    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated));
+    return;
+  }
+
+  await runTransaction(db, async (transaction) => {
+    const productRefs = cart.map((item) => doc(db, PRODUCTS_COLLECTION, item.id));
+    const snapshots = await Promise.all(productRefs.map((productRef) => transaction.get(productRef)));
+
+    snapshots.forEach((snapshot, index) => {
+      if (!snapshot.exists()) throw new Error(`${cart[index].name} is no longer available.`);
+      const available = Number(snapshot.data().stock || 0);
+      const requested = Number(cart[index].quantity || 1);
+      if (available < requested) throw new Error(`Only ${available} ${cart[index].name} left in stock.`);
+      transaction.update(productRefs[index], { stock: available - requested });
+    });
+  });
 }
 
 export async function deleteLocalProduct(productId) {

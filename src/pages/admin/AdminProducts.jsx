@@ -8,7 +8,6 @@ import {
   saveLocalProduct,
   deleteLocalProduct,
   seedProducts,
-  seedMissingProducts,
   subscribeToProducts,
 } from "../../data/productsData";
 
@@ -21,6 +20,7 @@ function ProductModal({ open, onClose, onSave, initial }) {
   );
   const [preview, setPreview] = useState(initial?.imageUrl || "");
   const [previewError, setPreviewError] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
   const fileRef = useRef();
 
   useEffect(() => {
@@ -38,6 +38,7 @@ function ProductModal({ open, onClose, onSave, initial }) {
     );
     setPreview(initial?.imageUrl || "");
     setPreviewError(false);
+    setImageFile(null);
   }, [initial, open]);
 
   function handleChange(e) {
@@ -56,6 +57,7 @@ function ProductModal({ open, onClose, onSave, initial }) {
     reader.onload = () => {
       setPreview(reader.result);
       setPreviewError(false);
+      setImageFile(file);
       setForm((prev) => ({ ...prev, imageUrl: reader.result }));
     };
     reader.readAsDataURL(file);
@@ -71,6 +73,7 @@ function ProductModal({ open, onClose, onSave, initial }) {
       ...form,
       price: Number(form.price),
       stock: Number(form.stock || 0),
+      imageFile,
       imageUrl:
         preview ||
         "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80",
@@ -277,7 +280,6 @@ export default function AdminProducts() {
         return;
       }
       setProducts(list);
-      seedMissingProducts(DEFAULT_PRODUCTS, list).catch(() => {});
     });
     return unsubscribe;
   }, []);

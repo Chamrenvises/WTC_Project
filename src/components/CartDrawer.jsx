@@ -2,16 +2,22 @@ import { useCart } from "../context/CartContext";
 import { Link } from "react-router-dom";
 import { HiX, HiTrash, HiPlus, HiMinus, HiArrowRight, HiShoppingBag, HiShieldCheck } from "react-icons/hi";
 import { toast } from "react-toastify";
+import { purchaseProducts } from "../data/productsData";
 
 export default function CartDrawer() {
   const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, clearCart, subtotal, totalCount } = useCart();
 
   if (!isCartOpen) return null;
 
-  function handleCheckout() {
-    toast.success("Order placed successfully! Thank you for shopping with PhoneGenZ.");
-    clearCart();
-    setIsCartOpen(false);
+  async function handleCheckout() {
+    try {
+      await purchaseProducts(cart);
+      toast.success("Order placed successfully! Thank you for shopping with PhoneGenZ.");
+      clearCart();
+      setIsCartOpen(false);
+    } catch (error) {
+      toast.error(error.message || "Could not complete your order. Please try again.");
+    }
   }
 
   return (

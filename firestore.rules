@@ -6,6 +6,10 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if request.auth != null
         && request.auth.token.email == "chamrenvises6@gmail.com";
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["stock"])
+        && request.resource.data.stock >= 0
+        && request.resource.data.stock <= resource.data.stock;
     }
   }
 }
