@@ -23,10 +23,16 @@ function withTimeout(promise, message) {
 
 function uploadProductImage(imageRef, imageFile) {
   return new Promise((resolve, reject) => {
-    const uploadTask = uploadBytesResumable(imageRef, imageFile);
+    let uploadTask;
+    try {
+      uploadTask = uploadBytesResumable(imageRef, imageFile);
+    } catch (error) {
+      reject(error);
+      return;
+    }
     let timeoutId = setTimeout(() => {
       uploadTask.cancel();
-      reject(new Error("Image upload timed out. Check Firebase Storage and try again."));
+      reject(new Error("Firebase Storage is unavailable. Enable Storage for this Firebase project and publish storage.rules."));
     }, FIREBASE_REQUEST_TIMEOUT);
 
     uploadTask.on(
