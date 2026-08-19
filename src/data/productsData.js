@@ -273,6 +273,10 @@ export async function saveLocalProduct(productData) {
 }
 
 export async function purchaseProducts(cart) {
+  if (!auth?.currentUser) {
+    throw new Error("Please sign in before checking out.");
+  }
+
   if (!db) {
     const products = getLocalProducts();
     const purchased = new Map(cart.map((item) => [item.id, item.quantity || 1]));
