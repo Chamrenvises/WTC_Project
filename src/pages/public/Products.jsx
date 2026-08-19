@@ -42,10 +42,21 @@ export default function Products() {
     });
 
   return (
-    <div className="pt-28 pb-28 min-h-screen bg-[#f5f3ef]">
+    <div className="pt-28 pb-28 min-h-screen bg-[#fafafa]">
+      <div className="container mb-12">
+        <div className="text-center space-y-4 max-w-3xl mx-auto py-12">
+          <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tight text-premium">
+            Store
+          </h1>
+          <p className="text-slate-500 text-lg md:text-xl font-medium">
+            The latest models, fully unlocked. Ready to ship.
+          </p>
+        </div>
+      </div>
+
       <div className="container">
-        <div className="product-list-shell">
-          <div className="product-list-toolbar">
+        <div className="mb-10 space-y-6">
+          <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
             <div className="search-field w-full lg:max-w-md">
               <HiSearch className="search-field-icon text-slate-400 text-xl" />
               <input
@@ -54,16 +65,16 @@ export default function Products() {
                 placeholder="Search models, brands..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="input-field search-field-input rounded-full shadow-sm bg-white/80 border-slate-200"
+                className="input-field search-field-input rounded-full shadow-sm"
               />
             </div>
 
             <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
-              <span className="text-sm font-semibold text-slate-500 hidden sm:inline">Sort by</span>
+              <span className="text-sm text-slate-500 font-semibold hidden sm:inline">Sort by</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="input-field py-3 px-4 max-w-[220px] rounded-full shadow-sm font-medium text-slate-700 cursor-pointer appearance-none bg-white border-slate-200"
+                className="input-field py-3 px-4 max-w-[200px] rounded-full shadow-sm font-medium text-slate-700 cursor-pointer appearance-none bg-white"
               >
                 <option value="featured">Featured</option>
                 <option value="price-low">Price: Low to High</option>
@@ -73,94 +84,145 @@ export default function Products() {
             </div>
           </div>
 
-          {(search || selectedBrand !== "All" || selectedCategory !== "All") && (
-            <div className="product-list-filter-row">
-              <span>{filtered.length} items found</span>
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setSelectedBrand("All");
-                  setSelectedCategory("All");
-                }}
-                className="text-[#1f4f7a] hover:underline font-semibold"
-              >
-                Clear filters
-              </button>
-            </div>
-          )}
-
-          {loading ? (
-            <div className="product-list-empty state-loading">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="product-row-loading" />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-6 pt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              {brands.map((brand) => (
+                <button
+                  key={brand}
+                  onClick={() => setSelectedBrand(brand)}
+                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+                    selectedBrand === brand
+                      ? "bg-black text-white shadow-md"
+                      : "bg-white text-slate-600 border border-slate-200 hover:border-slate-400"
+                  }`}
+                >
+                  {brand}
+                </button>
               ))}
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="product-list-empty">
-              <MdSmartphone className="text-6xl text-slate-300 mx-auto" />
-              <h3 className="text-slate-900 text-xl font-bold">No items found</h3>
-              <p className="text-slate-500 text-sm">
-                We couldn't find any phone matching your criteria. Try adjusting your filters.
-              </p>
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setSelectedBrand("All");
-                  setSelectedCategory("All");
-                }}
-                className="btn-secondary mt-4"
-              >
-                Reset Filters
-              </button>
+
+            <div className="hidden sm:block w-px h-6 bg-slate-200"></div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+                    selectedCategory === cat
+                      ? "bg-slate-800 text-white shadow-md"
+                      : "bg-white text-slate-600 border border-slate-200 hover:border-slate-400"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
-          ) : (
-            <div className="product-list-table-wrap">
-              <table className="product-list-table">
-                <thead>
-                  <tr>
-                    <th>Smartphone</th>
-                    <th>Brand</th>
-                    <th>Price</th>
-                    <th>Stock Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((phone) => (
-                    <tr key={phone.id} className="product-list-row">
-                      <td className="product-model-cell">
-                        <div className="product-model-wrap">
-                          <div className="product-list-thumb">
-                            <img
-                              src={
-                                phone.imageUrl ||
-                                "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80"
-                              }
-                              alt={phone.name}
-                              loading="lazy"
-                            />
-                          </div>
-                          <div className="product-model-copy">
-                            <h3>{phone.name}</h3>
-                            <p>{phone.specs || "Premium smartphone with advanced performance and camera features."}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="product-brand-cell">{phone.brand}</td>
-                      <td className="product-price-cell">${Number(phone.price).toLocaleString()}</td>
-                      <td className="product-stock-cell">
-                        <span
-                          className={`product-stock-pill ${Number(phone.stock) > 0 ? "in-stock" : "sold-out"}`}
-                        >
-                          {Number(phone.stock) > 0 ? `${phone.stock} UNITS` : "SOLD OUT"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mb-6 text-sm font-medium text-slate-500">
+          <span>{filtered.length} items found</span>
+          {(search || selectedBrand !== "All" || selectedCategory !== "All") && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedBrand("All");
+                setSelectedCategory("All");
+              }}
+              className="text-[#0066cc] hover:underline"
+            >
+              Clear filters
+            </button>
           )}
         </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="card p-6 animate-pulse space-y-4 bg-white border-none shadow-sm">
+                <div className="h-72 bg-[#f5f5f7] rounded-xl"></div>
+                <div className="h-6 bg-[#f5f5f7] rounded w-1/2"></div>
+                <div className="h-4 bg-[#f5f5f7] rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="card-bordered p-16 text-center max-w-lg mx-auto space-y-4 bg-white rounded-3xl">
+            <MdSmartphone className="text-6xl text-slate-300 mx-auto" />
+            <h3 className="text-slate-900 text-xl font-bold">No items found</h3>
+            <p className="text-slate-500 text-sm">
+              We couldn't find any phone matching your criteria. Try adjusting your filters.
+            </p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedBrand("All");
+                setSelectedCategory("All");
+              }}
+              className="btn-secondary mt-4"
+            >
+              Reset Filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filtered.map((phone) => (
+              <div
+                key={phone.id}
+                className="card card-bordered group flex flex-col justify-between overflow-hidden bg-white"
+              >
+                <div className="h-80 w-full bg-[#f5f5f7] relative overflow-hidden flex items-center justify-center p-8">
+                  <img
+                    src={
+                      phone.imageUrl ||
+                      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80"
+                    }
+                    alt={phone.name}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-4 left-4 flex gap-2">
+                    <span className="badge badge-gray uppercase tracking-wider shadow-sm bg-white/80 backdrop-blur">
+                      {phone.brand}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-8 flex-1 flex flex-col justify-between">
+                  <div className="space-y-2 mb-6">
+                    <h3 className="text-2xl font-bold text-slate-900 line-clamp-1">
+                      {phone.name}
+                    </h3>
+                    {phone.specs && (
+                      <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed">
+                        {phone.specs}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 mt-auto">
+                    <div>
+                      <span className="text-3xl font-black text-slate-900 block">
+                        ${Number(phone.price).toLocaleString()}
+                      </span>
+                      <span className={`text-xs font-bold ${Number(phone.stock) > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                        {Number(phone.stock) > 0 ? `${phone.stock} in stock` : "Out of stock"}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => addToCart(phone)}
+                      disabled={Number(phone.stock) <= 0}
+                      className="btn-buy disabled:cursor-not-allowed disabled:opacity-40 disabled:transform-none"
+                    >
+                      {Number(phone.stock) > 0 ? "Buy" : "Sold out"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
