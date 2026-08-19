@@ -39,7 +39,7 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/WTC_Project">
           <CartDrawer />
           <Routes>
             {/* Public pages */}
