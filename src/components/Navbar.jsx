@@ -57,7 +57,7 @@ export default function Navbar() {
 
   return (
     <nav className={`navbar ${scrolled ? "navbar-scrolled" : ""}`}>
-      <div className="container">
+      <div className="container relative z-50">
         <div className="navbar-inner">
           {/* Brand Logo */}
           <Link to="/" className="navbar-logo shrink-0">

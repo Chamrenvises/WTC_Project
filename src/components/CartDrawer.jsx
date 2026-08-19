@@ -30,14 +30,14 @@ export default function CartDrawer() {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-hidden pointer-events-none">
+    <div className="fixed inset-0 z-[40] overflow-hidden pointer-events-none">
       <div
         className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity pointer-events-auto"
         onClick={() => setIsCartOpen(false)}
       />
 
-      <div className="absolute inset-y-0 right-0 w-full max-w-md pointer-events-auto">
-        <div className="h-full w-full bg-[#0f111e] border-l border-white/10 shadow-2xl flex flex-col justify-between">
+      <div className="absolute inset-y-0 right-0 top-[4.75rem] w-full max-w-md pointer-events-auto">
+        <div className="h-[calc(100%-4.75rem)] w-full bg-[#0f111e] border-l border-white/10 shadow-2xl flex flex-col justify-between">
           {/* Header */}
           <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#131526]">
             <div className="flex items-center gap-3">
