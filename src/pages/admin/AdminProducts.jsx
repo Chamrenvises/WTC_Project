@@ -76,14 +76,18 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
       initial?.imageUrl ||
       "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80";
 
-    await onSave({
-      ...form,
-      price: Number(form.price),
-      stock: Number(form.stock || 0),
-      imageUrl: finalImageUrl,
-      imageFile,
-    });
-    onClose();
+    try {
+      await onSave({
+        ...form,
+        price: Number(form.price),
+        stock: Number(form.stock || 0),
+        imageUrl: finalImageUrl,
+        imageFile,
+      });
+      onClose();
+    } catch {
+      // Keep the form open so the admin can retry after a failed upload or save.
+    }
   }
 
   if (!open) return null;
@@ -308,6 +312,7 @@ export default function AdminProducts() {
       // eslint-disable-next-line no-console
       console.error("Failed saving product:", error);
       toast.error(error?.message || "Could not save the phone. Check your connection and try again.");
+      throw error;
     }
   }
 

@@ -237,11 +237,16 @@ export async function saveLocalProduct(productData) {
   delete cleanProductData.imageFile;
 
   if (productData.id) {
-    const updated = products.map((p) =>
-      p.id === productData.id ? { ...p, ...cleanProductData, updatedAt: new Date().toISOString() } : p
-    );
+    const existingProduct = products.find((product) => product.id === productData.id);
+    const savedProduct = {
+      ...(existingProduct || {}),
+      ...cleanProductData,
+      updatedAt: new Date().toISOString(),
+    };
+    const updated = existingProduct
+      ? products.map((product) => (product.id === productData.id ? savedProduct : product))
+      : [savedProduct, ...products];
     localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updated));
-    const savedProduct = updated.find((product) => product.id === productData.id);
     if (db) {
       try {
         await setDoc(doc(db, PRODUCTS_COLLECTION, productData.id), savedProduct);
