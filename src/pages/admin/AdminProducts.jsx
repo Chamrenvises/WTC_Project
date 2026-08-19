@@ -112,7 +112,7 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div className="space-y-3">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
               Product Photo
@@ -128,7 +128,7 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-700">Image preview</p>
                   <p className="truncate text-xs text-slate-500">
-                    {imageFile ? "This image will be uploaded to Firebase Storage." : "Current product image"}
+                    {imageFile ? "This image will be uploaded" : "Current product image"}
                   </p>
                 </div>
               </div>
@@ -138,7 +138,7 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
               Or use a Product Photo URL
             </label>
             <input
-              type="url"
+              type="text"
               name="imageUrl"
               value={form.imageUrl}
               onChange={handleChange}
