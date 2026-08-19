@@ -1,6 +1,5 @@
 import { collection, deleteDoc, doc, onSnapshot, runTransaction, setDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
-import { auth, db, storage } from "../firebase/config";
+import { auth, db } from "../firebase/config";
 
 const PRODUCTS_STORAGE_KEY = "phonezone_products";
 const PRODUCTS_COLLECTION = "products";
@@ -19,35 +18,6 @@ function withTimeout(promise, message) {
   });
 
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
-}
-
-function uploadProductImage(imageRef, imageFile) {
-  return new Promise((resolve, reject) => {
-    let uploadTask;
-    try {
-      uploadTask = uploadBytesResumable(imageRef, imageFile);
-    } catch (error) {
-      reject(error);
-      return;
-    }
-    let timeoutId = setTimeout(() => {
-      uploadTask.cancel();
-      reject(new Error("Firebase Storage is unavailable. Enable Storage for this Firebase project and publish storage.rules."));
-    }, FIREBASE_REQUEST_TIMEOUT);
-
-    uploadTask.on(
-      "state_changed",
-      undefined,
-      (error) => {
-        clearTimeout(timeoutId);
-        reject(error);
-      },
-      () => {
-        clearTimeout(timeoutId);
-        resolve(uploadTask.snapshot);
-      }
-    );
-  });
 }
 
 export const DEFAULT_PRODUCTS = [
@@ -249,35 +219,11 @@ export async function seedProducts(products) {
 export async function saveLocalProduct(productData) {
   const products = getLocalProducts();
   const productId = productData.id || `phone-${Date.now()}`;
-  let imageUrl = productData.imageUrl;
 
   if (db && auth?.currentUser?.email?.toLowerCase() !== "chamrenvises6@gmail.com") {
     throw new Error("Admin access is required to save products. Sign in with the admin account.");
   }
-
-  if (productData.imageFile && !storage) {
-    throw new Error("Image storage is not configured. Use an image URL or configure Firebase Storage.");
-  }
-
-  if (productData.imageFile && storage) {
-    try {
-      const safeFileName = productData.imageFile.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-      const imageRef = ref(storage, `products/${productId}/${Date.now()}-${safeFileName}`);
-      const uploaded = await uploadProductImage(imageRef, productData.imageFile);
-      imageUrl = await withTimeout(
-        getDownloadURL(uploaded.ref),
-        "Getting the uploaded image URL timed out. Try again."
-      );
-    } catch (err) {
-      // surface storage errors with a clearer message
-      // eslint-disable-next-line no-console
-      console.error("Image upload failed:", err);
-      throw new Error("Image upload failed: " + (err?.message || err?.code || "unknown error"));
-    }
-  }
-
-  const cleanProductData = { ...productData, id: productId, imageUrl };
-  delete cleanProductData.imageFile;
+  const cleanProductData = { ...productData, id: productId };
 
   if (productData.id) {
     const existingProduct = products.find((product) => product.id === productData.id);

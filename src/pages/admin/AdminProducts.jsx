@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { HiPlus, HiPencil, HiTrash, HiSearch, HiX, HiUpload } from "react-icons/hi";
+import { HiPlus, HiPencil, HiTrash, HiSearch, HiX } from "react-icons/hi";
 import { MdSmartphone } from "react-icons/md";
 import {
   DEFAULT_PRODUCTS,
@@ -19,7 +19,6 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
   const [form, setForm] = useState(
     initial || { name: "", brand: "Apple", price: "", stock: "20", category: "Flagship", specs: "", description: "", imageUrl: "" }
   );
-  const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(initial?.imageUrl || "");
   const [saving, setSaving] = useState(false);
 
@@ -36,7 +35,6 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
         imageUrl: "",
       }
     );
-    setImageFile(null);
     setImagePreview(initial?.imageUrl || "");
     setSaving(false);
   }, [initial, open]);
@@ -44,26 +42,6 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function handleImageChange(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image file.");
-      e.target.value = "";
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be 5MB or smaller.");
-      e.target.value = "";
-      return;
-    }
-
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
   }
 
   async function handleSubmit(e) {
@@ -86,11 +64,10 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
         price: Number(form.price),
         stock: Number(form.stock || 0),
         imageUrl: finalImageUrl,
-        imageFile,
       });
       onClose();
     } catch {
-      // Keep the form open so the admin can retry after a failed upload or save.
+      // Keep the form open so the admin can retry after a failed save.
       setSaving(false);
     }
   }
@@ -115,28 +92,17 @@ function ProductModal({ open, onClose, onSave, initial, brands, categories }) {
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div className="space-y-3">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Product Photo
-            </label>
-            <label className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm font-bold text-slate-600 cursor-pointer hover:border-slate-500 hover:bg-slate-100 transition-colors">
-              <HiUpload className="text-lg" />
-              {imageFile ? imageFile.name : "Choose image from PC"}
-              <input type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+              Product Photo URL
             </label>
             {imagePreview && (
               <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-2">
                 <img src={imagePreview} alt="Product preview" className="h-16 w-16 rounded-lg object-cover" />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-700">Image preview</p>
-                  <p className="truncate text-xs text-slate-500">
-                    {imageFile ? "This image will be uploaded" : "Current product image"}
-                  </p>
+                  <p className="truncate text-xs text-slate-500">Current product image</p>
                 </div>
               </div>
             )}
-            <p className="text-[11px] text-slate-500">PNG, JPG, WEBP up to 5MB. The saved image URL is stored with the product.</p>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Or use a Product Photo URL
-            </label>
             <input
               type="text"
               name="imageUrl"
